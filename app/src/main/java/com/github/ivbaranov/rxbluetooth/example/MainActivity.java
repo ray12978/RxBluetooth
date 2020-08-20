@@ -15,6 +15,8 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Adapter;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -221,8 +223,16 @@ public class MainActivity extends AppCompatActivity {
         text2.setText(devAddress);
         return view;
       }
+
     });
-  }
+    result.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+      @Override
+      public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+      }
+    });
+    }
+
 
   private void showToast(String message) {
     Toast.makeText(this, message, Toast.LENGTH_SHORT).show();

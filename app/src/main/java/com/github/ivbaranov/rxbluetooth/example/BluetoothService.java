@@ -6,7 +6,11 @@ import android.content.Intent;
 import android.os.IBinder;
 import androidx.annotation.Nullable;
 import android.util.Log;
+
+import com.github.ivbaranov.rxbluetooth.BluetoothConnection;
 import com.github.ivbaranov.rxbluetooth.RxBluetooth;
+
+import io.reactivex.Flowable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
@@ -15,6 +19,7 @@ public class BluetoothService extends Service {
   private static final String TAG = "BluetoothService";
 
   private RxBluetooth rxBluetooth;
+  private BluetoothConnection blueConn;
   private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
   @Override public void onCreate() {
@@ -58,4 +63,12 @@ public class BluetoothService extends Service {
   @Nullable @Override public IBinder onBind(Intent intent) {
     return null;
   }
+  public void aa(){
+    rxBluetooth.observeConnectionState();
+    Flowable<String> a = blueConn.observeStringStream();
+    if (a.equals("aaa") ){
+
+    }
+  }
+
 }

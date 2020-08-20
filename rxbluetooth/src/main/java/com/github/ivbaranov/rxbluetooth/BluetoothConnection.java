@@ -30,6 +30,8 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
+
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
@@ -46,6 +48,9 @@ public final class BluetoothConnection {
 
   boolean connected = false;
 
+  private final UUID serialPortUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
+
   /**
    * Container for simplifying read and write from/to {@link BluetoothSocket}.
    *
@@ -58,7 +63,7 @@ public final class BluetoothConnection {
     }
 
     this.socket = socket;
-
+    //socket =
     try {
       inputStream = socket.getInputStream();
       outputStream = socket.getOutputStream();
