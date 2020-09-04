@@ -43,6 +43,7 @@ public final class BtPredicate {
     };
   }
 
+
   private BtPredicate() {
     throw new AssertionError("No instances.");
   }

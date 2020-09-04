@@ -1,7 +1,9 @@
 package com.github.ivbaranov.rxbluetooth.example;
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -15,7 +17,6 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -23,18 +24,27 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.github.ivbaranov.rxbluetooth.RxBluetooth;
+import com.github.ivbaranov.rxbluetooth.events.ConnectionStateEvent;
 import com.github.ivbaranov.rxbluetooth.predicates.BtPredicate;
+
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
+
+import java.security.acl.Acl;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
   private static final int REQUEST_PERMISSION_COARSE_LOCATION = 0;
   private static final int REQUEST_ENABLE_BT = 1;
-  private static final String TAG = "MainActivity";
+  private static final String TAG = "BTSta";
 
   private Button start;
   private Button stop;
@@ -42,8 +52,10 @@ public class MainActivity extends AppCompatActivity {
   private Toolbar toolbar;
   private RxBluetooth rxBluetooth;
   private CompositeDisposable compositeDisposable = new CompositeDisposable();
+  private CompositeDisposable compositeDisposable1 = new CompositeDisposable();
   private List<BluetoothDevice> devices = new ArrayList<>();
   private Intent bluetoothServiceIntent;
+  private final UUID serialPortUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -87,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
       // handle the lack of bluetooth support
       Log.d(TAG, "Bluetooth is not supported!");
     } else {
+      //connDevice();
       initEventListeners();
       // check if bluetooth is currently enabled and ready for use
       if (!rxBluetooth.isBluetoothEnabled()) {
@@ -173,6 +186,35 @@ public class MainActivity extends AppCompatActivity {
             start.setBackgroundColor(getResources().getColor(R.color.colorInactive));
           }
         }));
+    compositeDisposable.add(rxBluetooth.observeConnectionState()
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeOn(Schedulers.computation())
+            .subscribe(new Consumer<ConnectionStateEvent>() {
+              @Override public void accept(ConnectionStateEvent event) throws Exception {
+                switch (event.getState()) {
+                  case BluetoothAdapter.STATE_DISCONNECTED:
+                    Log.e(TAG, "Device is disconnected");
+                    System.out.println("1");
+                    break;
+                  case BluetoothAdapter.STATE_CONNECTING:
+                    Log.e(TAG, "Device is connecting");
+                    System.out.println("2");
+                    break;
+                  case BluetoothAdapter.STATE_CONNECTED:
+                    Log.e(TAG, "Device is connected");
+                    System.out.println("3");
+                    break;
+                  case BluetoothAdapter.STATE_DISCONNECTING:
+                    Log.e(TAG, "Device is disconnecting");
+                    System.out.println("4");
+                    break;
+                }
+              }
+            }));
+    /**
+     * test connect
+     */
+
 
     start.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
@@ -228,13 +270,52 @@ public class MainActivity extends AppCompatActivity {
     result.setOnItemClickListener(new AdapterView.OnItemClickListener() {
       @Override
       public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+        BluetoothDevice device = devices.get(position);
+        String devName = device.getName();
+        String devAddress = device.getAddress();
+        System.out.println(devName);
+        System.out.println(devAddress);
+        connDevice(device);
       }
     });
-    }
-
+  }
 
   private void showToast(String message) {
     Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+  }
+
+
+  private void connDevice(BluetoothDevice  bluetoothDevice) {
+    compositeDisposable1.add(rxBluetooth.connectAsServer("servername", serialPortUUID)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeOn(Schedulers.io())
+            .subscribe(
+            new Consumer<BluetoothSocket>() {
+              @Override public void accept(BluetoothSocket bluetoothSocket) throws Exception {
+                // Client connected, do anything with the socket
+                System.out.println("server conned");
+              }
+            }, new Consumer<Throwable>() {
+              @Override public void accept(Throwable throwable) throws Exception {
+                // On error
+                System.out.println("server error");
+              }
+            }));
+
+    compositeDisposable1.add(rxBluetooth.connectAsClient(bluetoothDevice, serialPortUUID)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeOn(Schedulers.io())
+            .subscribe(
+            new Consumer<BluetoothSocket>() {
+              @Override public void accept(BluetoothSocket bluetoothSocket) throws Exception {
+                // Connected to bluetooth device, do anything with the socket
+                System.out.println("conned");
+              }
+            }, new Consumer<Throwable>() {
+              @Override public void accept(Throwable throwable) throws Exception {
+                // On error
+                System.out.println("error");
+              }
+            }));
   }
 }
