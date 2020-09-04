@@ -311,6 +311,7 @@ public class MainActivity extends AppCompatActivity {
                 // Connected to bluetooth device, do anything with the socket
                 System.out.println("conned");
               }
+
             }, new Consumer<Throwable>() {
               @Override public void accept(Throwable throwable) throws Exception {
                 // On error
